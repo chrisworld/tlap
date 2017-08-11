@@ -5,6 +5,7 @@ resized_folder=resized
 deflickered_folder=deflickered
 video_folder=video
 fps=25
+path_to_defl_sript="$(dirname $0)"
 
 # functions
 usage ()
@@ -57,37 +58,48 @@ else
 	usage
 fi
 
+# file extension
+file=$(find $file_dir -maxdepth 1 -name '*.jpg' -o -name '*.JPG' | head -n 1)
+if [ -z "$file" ]
+then
+	echo "...empty directory, no jpg or JPG files"
+	exit
+fi
+filename=$(basename "$file")
+exte="${filename##*.}"
+echo "...use ${exte} as file extension"
+
 # resize to hd
 if [[ ! -e $resi_dir ]]; then
-	echo "create folder: $resi_dir"
+	echo "...create folder: $resized_folder"
 	mkdir $resi_dir
 	echo "...resize"
-	mogrify -path $resi_dir -resize 1920x1080! $file_dir/*.JPG
+	mogrify -path $resi_dir -resize 1920x1080! $file_dir/*.${exte}
 elif [[ ! -d $resi_dir ]]; then
-	echo "$resi_dir already exists but is not a directory" 1>&2
+	echo "...$resized_folder already exists but is not a directory" 1>&2
 	exit
 else
-	echo "folder already exists"
+	echo "...$resized_folder folder already exists, please use --clean to resize again"
 fi
 
 # deflicker script
-./timelapse-deflicker.pl -p 2 -P $resi_dir
+$path_to_defl_sript/timelapse-deflicker.pl -p 2 -P $resi_dir
 defl_dir=$resi_dir/$deflickered_folder
 
 # video output dir
 if [[ ! -e $out_dir ]]; then
-	echo "create folder: $out_dir"
+	echo "...create folder: $video_folder"
 	mkdir $out_dir
 elif [[ ! -d $out_dir ]]; then
-	echo "$out_dir already exists but is not a directory" 1>&2
+	echo "...$video_folder already exists but is not a directory" 1>&2
 	exit
 else
-	echo "folder already exists"
+	echo "...$video_folder folder for output already exists"
 fi
 
 # create video
-ffmpeg -r $fps -pattern_type glob -i $defl_dir'/*.JPG' -c:v copy $file_defl.avi
-ffmpeg -r $fps -pattern_type glob -i $resi_dir'/*.JPG' -c:v copy $file_undefl.avi
+ffmpeg -r $fps -pattern_type glob -i $defl_dir'/*.'${exte} -c:v copy $file_defl.avi
+ffmpeg -r $fps -pattern_type glob -i $resi_dir'/*.'${exte} -c:v copy $file_undefl.avi
 
 # compress .mkv
 #ffmpeg -i $file_defl.avi -c:v libx264 -preset slow -crf 15 $file_defl-final.mkv

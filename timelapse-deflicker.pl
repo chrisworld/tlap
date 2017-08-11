@@ -120,8 +120,8 @@ $RollingWindow = $opt{'w'} if defined( $opt{'w'} );
 $Passes        = $opt{'p'} if defined( $opt{'p'} );
 $data_dir = $opt{'P'} if defined( $opt{'P'} );
 
-say "Deflicker script: ";
-say "...path to images: $data_dir";
+say "...deflicker script: ";
+say "......path to images: $data_dir";
 
 #This integer test fails on "+n", but that isn't serious here.
 die "The rolling average window for luminance smoothing should be a positive number greater or equal to 2" if ! ($RollingWindow eq int( $RollingWindow ) && $RollingWindow > 1 ) ;
